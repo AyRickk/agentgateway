@@ -38,6 +38,10 @@ use crate::transport::stream::{Extension, TCPConnectionInfo, TLSConnectionInfo};
 use crate::types::{backend, frontend};
 use crate::{ProxyInputs, store, *};
 
+// Default timestamp for model creation if not specified in configuration
+// January 1, 2024, 00:00:00 UTC
+const DEFAULT_MODEL_CREATED_TIMESTAMP: i64 = 1704067200;
+
 fn select_backend(route: &Route, _req: &Request) -> Option<RouteBackendReference> {
 	route
 		.backends
@@ -1417,7 +1421,7 @@ async fn make_backend_call(
 								"id": m.id.as_str(),
 								"object": "model",
 								"owned_by": m.owned_by.as_str(),
-								"created": m.created.unwrap_or(1704067200) // Default timestamp if not set
+								"created": m.created.unwrap_or(DEFAULT_MODEL_CREATED_TIMESTAMP)
 							})
 						})
 						.collect();
