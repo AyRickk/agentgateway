@@ -1402,14 +1402,40 @@ async fn make_backend_call(
 					(req, response_policies, Some(llm_request))
 				},
 				RouteType::Models => {
+					// Get models from the policy, if available
+					let models = llm_request_policies
+						.llm
+						.as_ref()
+						.map(|p| &p.models)
+						.unwrap_or(&Vec::new());
+					
+					// Build OpenAI-compatible /v1/models response
+					let models_json: Vec<serde_json::Value> = models
+						.iter()
+						.map(|m| {
+							serde_json::json!({
+								"id": m.id.as_str(),
+								"object": "model",
+								"owned_by": m.owned_by.as_str(),
+								"created": m.created.unwrap_or(1704067200) // Default timestamp if not set
+							})
+						})
+						.collect();
+					
+					let response_body = serde_json::json!({
+						"object": "list",
+						"data": models_json
+					});
+					
+					let body_bytes = serde_json::to_vec(&response_body)
+						.map_err(|e| ProxyError::ProcessingString(format!("Failed to serialize models response: {}", e)))?;
+					
 					return Ok(Box::pin(async move {
 						Ok(
 							::http::Response::builder()
-								.status(::http::StatusCode::NOT_IMPLEMENTED)
+								.status(::http::StatusCode::OK)
 								.header(::http::header::CONTENT_TYPE, "application/json")
-								.body(http::Body::from(format!(
-									"{{\"error\":\"Route '{route_type:?}' not implemented\"}}"
-								)))
+								.body(http::Body::from(body_bytes))
 								.expect("Failed to build response"),
 						)
 					}));
