@@ -1410,8 +1410,8 @@ async fn make_backend_call(
 					let models = llm_request_policies
 						.llm
 						.as_ref()
-						.map(|p| &p.models)
-						.unwrap_or(&Vec::new());
+						.map(|p| p.models.as_slice())
+						.unwrap_or(&[]);
 					
 					// Build OpenAI-compatible /v1/models response
 					let models_json: Vec<serde_json::Value> = models
