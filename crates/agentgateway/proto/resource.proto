@@ -521,12 +521,34 @@ message FrontendPolicySpec {
     string value = 2;  // CEL expression
   }
 
+  // AIModels configuration for Gateway-level model aggregation
+  // Allows declaring available models at the Gateway/HTTPRoute level
+  message AIModels {
+    // Model represents an AI model available via this Gateway
+    message Model {
+      // The model identifier (e.g., "gpt-4o-mini", "claude-3-5-sonnet")
+      string id = 1;
+      // The organization that owns/provides the model (e.g., "openai", "anthropic")
+      string owned_by = 2;
+      // Unix timestamp of when the model was created (optional)
+      optional int64 created = 3;
+    }
+
+    // Explicitly declared models available at this Gateway
+    repeated Model models = 1;
+    
+    // When true, automatically collect models from backend modelAliases
+    // and merge them with explicitly declared models
+    bool auto_collect_from_backends = 2;
+  }
+
   oneof kind {
     TCP tcp = 1;
     TLS tls = 2;
     HTTP http = 3;
     Logging logging = 4;
     Tracing tracing = 5;
+    AIModels ai_models = 6;
   }
 }
 

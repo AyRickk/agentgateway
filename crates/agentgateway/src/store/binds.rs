@@ -65,6 +65,8 @@ pub struct FrontendPolices {
 	pub tcp: Option<frontend::TCP>,
 	pub access_log: Option<frontend::LoggingPolicy>,
 	pub tracing: Option<Arc<crate::types::agent::TracingPolicy>>,
+	/// AI models configuration for Gateway-level model aggregation
+	pub ai_models: Option<frontend::AIModels>,
 }
 
 impl FrontendPolices {
@@ -658,6 +660,9 @@ impl Store {
 				},
 				FrontendPolicy::Tracing(p) => {
 					pol.tracing.get_or_insert_with(|| p.clone());
+				},
+				FrontendPolicy::AIModels(p) => {
+					pol.ai_models.get_or_insert_with(|| p.clone());
 				},
 			}
 		}

@@ -633,6 +633,28 @@ func (this *FrontendPolicySpec_TracingAttribute) UnmarshalJSON(b []byte) error {
 	return ResourceUnmarshaler.Unmarshal(bytes.NewReader(b), this)
 }
 
+// MarshalJSON is a custom marshaler for FrontendPolicySpec_AIModels
+func (this *FrontendPolicySpec_AIModels) MarshalJSON() ([]byte, error) {
+	str, err := ResourceMarshaler.MarshalToString(this)
+	return []byte(str), err
+}
+
+// UnmarshalJSON is a custom unmarshaler for FrontendPolicySpec_AIModels
+func (this *FrontendPolicySpec_AIModels) UnmarshalJSON(b []byte) error {
+	return ResourceUnmarshaler.Unmarshal(bytes.NewReader(b), this)
+}
+
+// MarshalJSON is a custom marshaler for FrontendPolicySpec_AIModels_Model
+func (this *FrontendPolicySpec_AIModels_Model) MarshalJSON() ([]byte, error) {
+	str, err := ResourceMarshaler.MarshalToString(this)
+	return []byte(str), err
+}
+
+// UnmarshalJSON is a custom unmarshaler for FrontendPolicySpec_AIModels_Model
+func (this *FrontendPolicySpec_AIModels_Model) UnmarshalJSON(b []byte) error {
+	return ResourceUnmarshaler.Unmarshal(bytes.NewReader(b), this)
+}
+
 // MarshalJSON is a custom marshaler for TrafficPolicySpec
 func (this *TrafficPolicySpec) MarshalJSON() ([]byte, error) {
 	str, err := ResourceMarshaler.MarshalToString(this)
@@ -919,17 +941,6 @@ func (this *BackendPolicySpec_Ai_PromptEnrichment) UnmarshalJSON(b []byte) error
 	return ResourceUnmarshaler.Unmarshal(bytes.NewReader(b), this)
 }
 
-// MarshalJSON is a custom marshaler for BackendPolicySpec_Ai_Model
-func (this *BackendPolicySpec_Ai_Model) MarshalJSON() ([]byte, error) {
-	str, err := ResourceMarshaler.MarshalToString(this)
-	return []byte(str), err
-}
-
-// UnmarshalJSON is a custom unmarshaler for BackendPolicySpec_Ai_Model
-func (this *BackendPolicySpec_Ai_Model) UnmarshalJSON(b []byte) error {
-	return ResourceUnmarshaler.Unmarshal(bytes.NewReader(b), this)
-}
-
 // MarshalJSON is a custom marshaler for BackendPolicySpec_Ai_RegexRule
 func (this *BackendPolicySpec_Ai_RegexRule) MarshalJSON() ([]byte, error) {
 	str, err := ResourceMarshaler.MarshalToString(this)
@@ -1026,6 +1037,17 @@ func (this *BackendPolicySpec_Ai_PromptCaching) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON is a custom unmarshaler for BackendPolicySpec_Ai_PromptCaching
 func (this *BackendPolicySpec_Ai_PromptCaching) UnmarshalJSON(b []byte) error {
+	return ResourceUnmarshaler.Unmarshal(bytes.NewReader(b), this)
+}
+
+// MarshalJSON is a custom marshaler for BackendPolicySpec_Ai_Model
+func (this *BackendPolicySpec_Ai_Model) MarshalJSON() ([]byte, error) {
+	str, err := ResourceMarshaler.MarshalToString(this)
+	return []byte(str), err
+}
+
+// UnmarshalJSON is a custom unmarshaler for BackendPolicySpec_Ai_Model
+func (this *BackendPolicySpec_Ai_Model) UnmarshalJSON(b []byte) error {
 	return ResourceUnmarshaler.Unmarshal(bytes.NewReader(b), this)
 }
 

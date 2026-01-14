@@ -1406,25 +1406,65 @@ async fn make_backend_call(
 					(req, response_policies, Some(llm_request))
 				},
 				RouteType::Models => {
-					// Get models from the policy, if available
-					let models = llm_request_policies
-						.llm
-						.as_ref()
-						.map(|p| p.models.as_slice())
-						.unwrap_or(&[]);
+					// Gateway-level model aggregation:
+					// 1. First, check for Gateway-level AI models configuration
+					// 2. If auto_collect_from_backends is enabled, also collect from modelAliases
+					// 3. Otherwise, fall back to backend-level models
 					
-					// Build OpenAI-compatible /v1/models response
-					let models_json: Vec<serde_json::Value> = models
-						.iter()
-						.map(|m| {
-							serde_json::json!({
-								"id": m.id.as_str(),
-								"object": "model",
-								"owned_by": m.owned_by.as_str(),
-								"created": m.created.unwrap_or(DEFAULT_MODEL_CREATED_TIMESTAMP)
-							})
-						})
-						.collect();
+					let frontend_policies = inputs
+						.stores
+						.read_binds()
+						.frontend_policies(inputs.cfg.gateway_ref());
+					
+					let mut models_json: Vec<serde_json::Value> = Vec::new();
+					let mut seen_ids = std::collections::HashSet::new();
+					
+					// Check for Gateway-level models
+					if let Some(ai_models) = &frontend_policies.ai_models {
+						// Add explicitly declared Gateway-level models
+						for m in &ai_models.models {
+							if seen_ids.insert(m.id.clone()) {
+								models_json.push(serde_json::json!({
+									"id": m.id.as_str(),
+									"object": "model",
+									"owned_by": m.owned_by.as_str(),
+									"created": m.created.unwrap_or(DEFAULT_MODEL_CREATED_TIMESTAMP)
+								}));
+							}
+						}
+						
+						// If auto-collect is enabled, aggregate from backend modelAliases
+						if ai_models.auto_collect_from_backends {
+							if let Some(llm_policy) = llm_request_policies.llm.as_ref() {
+								// Collect non-wildcard model aliases
+								for (alias, _) in &llm_policy.model_aliases {
+									// Skip wildcard patterns (they can't be individually listed)
+									if !alias.contains('*') && seen_ids.insert(alias.clone()) {
+										models_json.push(serde_json::json!({
+											"id": alias.as_str(),
+											"object": "model",
+											"owned_by": llm.provider.provider().as_str(),
+											"created": DEFAULT_MODEL_CREATED_TIMESTAMP
+										}));
+									}
+								}
+							}
+						}
+					} else {
+						// Fall back to backend-level models if no Gateway-level config
+						if let Some(llm_policy) = llm_request_policies.llm.as_ref() {
+							for m in &llm_policy.models {
+								if seen_ids.insert(m.id.clone()) {
+									models_json.push(serde_json::json!({
+										"id": m.id.as_str(),
+										"object": "model",
+										"owned_by": m.owned_by.as_str(),
+										"created": m.created.unwrap_or(DEFAULT_MODEL_CREATED_TIMESTAMP)
+									}));
+								}
+							}
+						}
+					}
 					
 					let response_body = serde_json::json!({
 						"object": "list",
