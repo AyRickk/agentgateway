@@ -126,3 +126,30 @@ pub struct LoggingPolicy {
 	#[serde(default, skip_serializing_if = "FzHashSet::is_empty")]
 	pub remove: Arc<FzHashSet<String>>,
 }
+
+/// AI Models configuration for Gateway-level model aggregation
+/// Allows declaring available models at the Gateway/HTTPRoute level
+#[apply(schema!)]
+pub struct AIModels {
+	/// Explicitly declared models available at this Gateway
+	#[serde(default, skip_serializing_if = "Vec::is_empty")]
+	pub models: Vec<AIModel>,
+
+	/// When true, automatically collect models from backend modelAliases
+	/// and merge them with explicitly declared models
+	#[serde(default, rename = "autoCollectFromBackends")]
+	pub auto_collect_from_backends: bool,
+}
+
+/// Represents an AI model available at the Gateway level
+#[apply(schema!)]
+pub struct AIModel {
+	/// The model identifier (e.g., "gpt-4o-mini", "claude-3-5-sonnet")
+	pub id: Strng,
+	/// The organization that owns/provides the model (e.g., "openai", "anthropic")
+	#[serde(rename = "ownedBy")]
+	pub owned_by: Strng,
+	/// Unix timestamp of when the model was created (optional)
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub created: Option<i64>,
+}

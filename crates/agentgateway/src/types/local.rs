@@ -792,6 +792,10 @@ struct LocalFrontendPolicies {
 	pub access_log: Option<frontend::LoggingPolicy>,
 	#[serde(default)]
 	pub tracing: Option<TracingConfig>,
+	/// AI models configuration for Gateway-level model aggregation.
+	/// Allows declaring available models at the Gateway level for /v1/models endpoint.
+	#[serde(default, rename = "aiModels")]
+	pub ai_models: Option<frontend::AIModels>,
 }
 
 #[apply(schema_de!)]
@@ -1231,6 +1235,7 @@ async fn split_frontend_policies(
 		tcp,
 		access_log,
 		tracing,
+		ai_models,
 	} = pol;
 	if let Some(p) = http {
 		add(FrontendPolicy::HTTP(p), "http");
@@ -1259,6 +1264,9 @@ async fn split_frontend_policies(
 			})),
 			"tracing",
 		);
+	}
+	if let Some(p) = ai_models {
+		add(FrontendPolicy::AIModels(p), "aiModels");
 	}
 	Ok(pols)
 }

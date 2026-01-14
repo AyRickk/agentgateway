@@ -1867,6 +1867,8 @@ pub enum FrontendPolicy {
 	TCP(frontend::TCP),
 	AccessLog(frontend::LoggingPolicy),
 	Tracing(Arc<TracingPolicy>),
+	#[serde(rename = "aiModels")]
+	AIModels(frontend::AIModels),
 }
 
 #[derive(Debug, Clone, serde::Serialize)]

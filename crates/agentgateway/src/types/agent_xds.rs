@@ -2,8 +2,8 @@ use std::net::{IpAddr, SocketAddr};
 use std::num::NonZeroU16;
 use std::sync::Arc;
 
-use ::http::{HeaderName, StatusCode};
 use frozen_collections::FzHashSet;
+use http::{HeaderName, StatusCode};
 use itertools::Itertools;
 use llm::{AIBackend, AIProvider, NamedAIProvider};
 use std::collections::HashMap;
@@ -11,16 +11,16 @@ use std::collections::HashMap;
 use super::agent::*;
 use crate::http::auth::{AwsAuth, BackendAuth};
 use crate::http::transformation_cel::{LocalTransform, LocalTransformationConfig, Transformation};
-use crate::http::{HeaderOrPseudo, Scheme, authorization};
+use crate::http::{authorization, HeaderOrPseudo, Scheme};
 use crate::mcp::McpAuthorization;
 use crate::telemetry::log::OrderedStringMap;
 use crate::types::discovery::NamespacedHostname;
-use crate::types::proto::ProtoError;
 use crate::types::proto::agent::backend_policy_spec::ai::request_guard::Kind;
-use crate::types::proto::agent::backend_policy_spec::ai::{ActionKind, response_guard};
+use crate::types::proto::agent::backend_policy_spec::ai::{response_guard, ActionKind};
 use crate::types::proto::agent::backend_policy_spec::backend_http::HttpVersion;
 use crate::types::proto::agent::mcp_target::Protocol;
 use crate::types::proto::agent::traffic_policy_spec::host_rewrite::Mode;
+use crate::types::proto::ProtoError;
 use crate::types::{agent, backend, proto};
 use crate::*;
 
@@ -98,7 +98,11 @@ impl From<&proto::agent::TlsConfig> for ServerTLSConfig {
 						Err(e) => warn!("unknown TLS cipher suite enum value {raw}: {e}"),
 					}
 				}
-				if out.is_empty() { None } else { Some(out) }
+				if out.is_empty() {
+					None
+				} else {
+					Some(out)
+				}
 			}
 		};
 
@@ -1110,11 +1114,9 @@ impl TryFrom<&proto::agent::TrafficPolicySpec> for TrafficPolicy {
 						tps::local_rate_limit::Type::Token => http::localratelimit::RateLimitType::Tokens,
 					},
 				};
-				TrafficPolicy::LocalRateLimit(vec![
-					spec
-						.try_into()
-						.map_err(|e| ProtoError::Generic(format!("invalid rate limit: {e}")))?,
-				])
+				TrafficPolicy::LocalRateLimit(vec![spec
+					.try_into()
+					.map_err(|e| ProtoError::Generic(format!("invalid rate limit: {e}")))?])
 			},
 			Some(tps::Kind::ExtAuthz(ea)) => {
 				use proto::agent::traffic_policy_spec::external_auth;
@@ -1538,7 +1540,11 @@ impl TryFrom<&proto::agent::FrontendPolicySpec> for FrontendPolicy {
 								Err(e) => warn!("unknown TLS cipher suite enum value {raw}: {e}"),
 							}
 						}
-						if out.is_empty() { None } else { Some(out) }
+						if out.is_empty() {
+							None
+						} else {
+							Some(out)
+						}
 					}
 				},
 			}),
@@ -1594,6 +1600,18 @@ impl TryFrom<&proto::agent::FrontendPolicySpec> for FrontendPolicy {
 					tracer: once_cell::sync::OnceCell::new(),
 				}))
 			},
+			Some(fps::Kind::AiModels(m)) => FrontendPolicy::AIModels(frontend::AIModels {
+				models: m
+					.models
+					.iter()
+					.map(|model| frontend::AIModel {
+						id: strng::new(&model.id),
+						owned_by: strng::new(&model.owned_by),
+						created: model.created,
+					})
+					.collect(),
+				auto_collect_from_backends: m.auto_collect_from_backends,
+			}),
 			None => return Err(ProtoError::MissingRequiredField),
 		})
 	}
