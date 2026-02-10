@@ -1031,10 +1031,14 @@ impl Store {
 
 	fn insert_xds_bind(&mut self, raw: XdsBind) -> anyhow::Result<()> {
 		let mut bind = Bind::try_from(&raw)?;
-		// Respect the enableIpv6 config: only use IPv6 on unix when enabled
-		if !(cfg!(target_family = "unix") && self.ipv6_enabled) {
-			bind.address = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), bind.address.port());
-		}
+		// Respect the enableIpv6 config for bind address selection,
+		// matching the same logic used in types/local.rs for local config binds.
+		let port = bind.address.port();
+		bind.address = if cfg!(target_family = "unix") && self.ipv6_enabled {
+			SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port)
+		} else {
+			SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port)
+		};
 		// If XDS server pushes the same bind twice (which it shouldn't really do, but oh well),
 		// we need to copy the listeners over.
 		if let Some(old) = self.binds.remove(&bind.key) {
